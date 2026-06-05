@@ -1,5 +1,5 @@
 // src/services/api.js
-const API_URL = 'http://localhost:5001/api';
+const API_URL = 'https://donation-hub-1ry9.onrender.com/api';
 
 // Helper function for API calls
 const apiCall = async (endpoint, method = 'GET', data = null, token = null) => {
