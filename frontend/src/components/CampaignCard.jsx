@@ -38,7 +38,7 @@ const CampaignCard = ({ campaign }) => {
         setLoading(true);
         
         try {
-            // ✅ FIXED: Send both amount AND item
+            // ✅ FIXED: campaignId as string, removed campaignTitle to avoid confusion
             const response = await fetch(`${API_URL}/donations`, {
                 method: 'POST',
                 headers: {
@@ -47,9 +47,9 @@ const CampaignCard = ({ campaign }) => {
                 },
                 body: JSON.stringify({
                     amount: parseInt(amount),
-                    item: campaign.title,  // ← Added this!
-                    campaignId: campaign.id,
-                    campaignTitle: campaign.title
+                    item: campaign.title,
+                    campaignId: campaign.id.toString(),  // ← Convert to string
+                    // campaignTitle: campaign.title  // ← Removed, use item field instead
                 })
             });
             
@@ -57,7 +57,7 @@ const CampaignCard = ({ campaign }) => {
             console.log('Donation response:', data);
             
             if (data.success) {
-                alert(`✅ Thank you for your donation of ₹${amount} to "${campaign.title}"!\n\nReceipt ID: ${data.receiptId || 'N/A'}\n\nYou will receive a confirmation email shortly.`);
+                alert(`✅ Thank you for your donation of ₹${amount} to "${campaign.title}"!\n\nReceipt ID: ${data.receiptId || 'N/A'}`);
                 window.location.reload();
             } else {
                 alert(`❌ Donation failed: ${data.message || 'Please try again'}`);
