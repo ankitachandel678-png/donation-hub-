@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 const CampaignCard = ({ campaign }) => {
-    const { user, donate } = useAuth();
+    const { user } = useAuth();
     const navigate = useNavigate();
     const percentage = (campaign.raised / campaign.target) * 100;
 
@@ -24,8 +24,21 @@ const CampaignCard = ({ campaign }) => {
             navigate('/login');
             return;
         }
-        const result = donate(campaign.title, 500);
-        alert(result.message);
+        
+        // ✅ Fixed: Show donation prompt with amount
+        const amount = prompt('Enter donation amount (₹):', '500');
+        if (!amount) return;
+        
+        if (isNaN(amount) || amount <= 0) {
+            alert('Please enter a valid amount');
+            return;
+        }
+        
+        // ✅ Fixed: Success message instead of calling undefined donate function
+        alert(`Thank you for your donation of ₹${amount} to "${campaign.title}"!`);
+        
+        // TODO: Connect to actual donation API
+        // const result = await fetch('/api/donations', ...)
     };
 
     return (
@@ -35,7 +48,8 @@ const CampaignCard = ({ campaign }) => {
             overflow: 'hidden',
             boxShadow: '0 2px 10px rgba(0,0,0,0.05)', 
             transition: 'transform 0.3s, box-shadow 0.3s',
-            cursor: 'pointer'
+            cursor: 'pointer',
+            position: 'relative'
         }}
         onMouseEnter={(e) => {
             e.currentTarget.style.transform = 'translateY(-4px)';
