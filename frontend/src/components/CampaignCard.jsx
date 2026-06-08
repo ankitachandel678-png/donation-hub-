@@ -38,6 +38,7 @@ const CampaignCard = ({ campaign }) => {
         setLoading(true);
         
         try {
+            // ✅ FIXED: Send both amount AND item
             const response = await fetch(`${API_URL}/donations`, {
                 method: 'POST',
                 headers: {
@@ -45,11 +46,10 @@ const CampaignCard = ({ campaign }) => {
                     'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify({
-                    campaignId: campaign.id,
-                    campaignTitle: campaign.title,
                     amount: parseInt(amount),
-                    email: user.email,
-                    name: user.name
+                    item: campaign.title,  // ← Added this!
+                    campaignId: campaign.id,
+                    campaignTitle: campaign.title
                 })
             });
             
@@ -58,7 +58,6 @@ const CampaignCard = ({ campaign }) => {
             
             if (data.success) {
                 alert(`✅ Thank you for your donation of ₹${amount} to "${campaign.title}"!\n\nReceipt ID: ${data.receiptId || 'N/A'}\n\nYou will receive a confirmation email shortly.`);
-                // Optionally refresh page or update UI
                 window.location.reload();
             } else {
                 alert(`❌ Donation failed: ${data.message || 'Please try again'}`);
@@ -184,4 +183,4 @@ const CampaignCard = ({ campaign }) => {
     );
 };
 
-export default CampaignCard;    
+export default CampaignCard;
