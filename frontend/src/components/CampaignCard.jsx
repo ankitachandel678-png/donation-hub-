@@ -1,13 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
+const API_URL = 'https://donation-hub-1ry9.onrender.com/api';
+
 const CampaignCard = ({ campaign }) => {
-    const { user } = useAuth();
+    const { user, token } = useAuth();
     const navigate = useNavigate();
+    const [loading, setLoading] = useState(false);
     const percentage = (campaign.raised / campaign.target) * 100;
 
-    // YAHAN APNE CAMPAIGN IMAGE LINKS DALO
     const campaignImages = {
         "Library for 500 Children": "",
         "Clean Drinking Water": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSIOUjTFL_FYJWZcrdkrOKuRj6t_hvcUQEQ_g&s",
@@ -18,14 +20,13 @@ const CampaignCard = ({ campaign }) => {
     const defaultImage = "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=400";
     const campaignImage = campaignImages[campaign.title] || defaultImage;
 
-    const handleDonate = () => {
+    const handleDonate = async () => {
         if (!user) {
             alert('Please login first to donate!');
             navigate('/login');
             return;
         }
         
-        // ✅ Fixed: Show donation prompt with amount
         const amount = prompt('Enter donation amount (₹):', '500');
         if (!amount) return;
         
@@ -34,11 +35,40 @@ const CampaignCard = ({ campaign }) => {
             return;
         }
         
-        // ✅ Fixed: Success message instead of calling undefined donate function
-        alert(`Thank you for your donation of ₹${amount} to "${campaign.title}"!`);
+        setLoading(true);
         
-        // TODO: Connect to actual donation API
-        // const result = await fetch('/api/donations', ...)
+        try {
+            const response = await fetch(`${API_URL}/donations`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    campaignId: campaign.id,
+                    campaignTitle: campaign.title,
+                    amount: parseInt(amount),
+                    email: user.email,
+                    name: user.name
+                })
+            });
+            
+            const data = await response.json();
+            console.log('Donation response:', data);
+            
+            if (data.success) {
+                alert(`✅ Thank you for your donation of ₹${amount} to "${campaign.title}"!\n\nReceipt ID: ${data.receiptId || 'N/A'}\n\nYou will receive a confirmation email shortly.`);
+                // Optionally refresh page or update UI
+                window.location.reload();
+            } else {
+                alert(`❌ Donation failed: ${data.message || 'Please try again'}`);
+            }
+        } catch (error) {
+            console.error('Donation error:', error);
+            alert('❌ Network error. Please try again.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -59,7 +89,6 @@ const CampaignCard = ({ campaign }) => {
             e.currentTarget.style.transform = 'translateY(0)';
             e.currentTarget.style.boxShadow = '0 2px 10px rgba(0,0,0,0.05)';
         }}>
-            {/* Featured Badge */}
             {campaign.featured && (
                 <div style={{
                     position: 'absolute',
@@ -77,7 +106,6 @@ const CampaignCard = ({ campaign }) => {
                 </div>
             )}
 
-            {/* Campaign Image */}
             <div style={{ height: '180px', overflow: 'hidden' }}>
                 <img 
                     src={campaignImage}
@@ -90,7 +118,6 @@ const CampaignCard = ({ campaign }) => {
                 />
             </div>
             
-            {/* Campaign Content */}
             <div style={{ padding: '1.2rem' }}>
                 <h3 style={{ margin: '0 0 0.3rem 0', fontSize: '1.1rem', fontWeight: '600' }}>
                     {campaign.title}
@@ -99,7 +126,6 @@ const CampaignCard = ({ campaign }) => {
                     {campaign.description}
                 </p>
                 
-                {/* Progress Bar */}
                 <div style={{ marginBottom: '0.5rem' }}>
                     <div style={{ background: '#e2e8f0', borderRadius: '10px', height: '6px', overflow: 'hidden' }}>
                         <div style={{ 
@@ -111,7 +137,6 @@ const CampaignCard = ({ campaign }) => {
                     </div>
                 </div>
                 
-                {/* Raised Amount and Donors */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                     <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
                         ₹{campaign.raised.toLocaleString()} raised
@@ -121,7 +146,6 @@ const CampaignCard = ({ campaign }) => {
                     </span>
                 </div>
                 
-                {/* Target and Days Left */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem' }}>
                     <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>
                         Target: ₹{campaign.target.toLocaleString()}
@@ -131,29 +155,33 @@ const CampaignCard = ({ campaign }) => {
                     </span>
                 </div>
                 
-                {/* Donate Button */}
                 <button 
                     onClick={handleDonate} 
+                    disabled={loading}
                     style={{ 
                         width: '100%',
-                        background: '#f97316', 
+                        background: loading ? '#fbd38d' : '#f97316', 
                         color: 'white', 
                         border: 'none', 
                         padding: '0.6rem', 
                         borderRadius: '40px', 
-                        cursor: 'pointer',
+                        cursor: loading ? 'not-allowed' : 'pointer',
                         fontWeight: '500',
                         fontSize: '0.85rem',
                         transition: 'background 0.3s'
                     }}
-                    onMouseEnter={(e) => e.target.style.background = '#ea580c'}
-                    onMouseLeave={(e) => e.target.style.background = '#f97316'}
+                    onMouseEnter={(e) => {
+                        if (!loading) e.target.style.background = '#ea580c';
+                    }}
+                    onMouseLeave={(e) => {
+                        if (!loading) e.target.style.background = '#f97316';
+                    }}
                 >
-                    Donate Now →
+                    {loading ? 'Processing...' : 'Donate Now →'}
                 </button>
             </div>
         </div>
     );
 };
 
-export default CampaignCard;
+export default CampaignCard;    
