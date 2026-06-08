@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 
+// ✅ Use live backend URL
+const API_URL = 'https://donation-hub-1ry9.onrender.com/api';
+
 const Contact = () => {
     const [formData, setFormData] = useState({ 
         name: '', 
@@ -22,7 +25,8 @@ const Contact = () => {
         setError('');
         
         try {
-            const response = await fetch('http://localhost:5001/api/contact', {
+            // ✅ Fixed: Using live backend URL instead of localhost
+            const response = await fetch(`${API_URL}/contact`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
