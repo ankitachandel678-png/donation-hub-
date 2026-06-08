@@ -38,7 +38,7 @@ const CampaignCard = ({ campaign }) => {
         setLoading(true);
         
         try {
-            // ✅ FIXED: campaignId as string, removed campaignTitle to avoid confusion
+            // ✅ FIXED: No campaignId, only campaignTitle
             const response = await fetch(`${API_URL}/donations`, {
                 method: 'POST',
                 headers: {
@@ -48,8 +48,7 @@ const CampaignCard = ({ campaign }) => {
                 body: JSON.stringify({
                     amount: parseInt(amount),
                     item: campaign.title,
-                    campaignId: campaign.id.toString(),  // ← Convert to string
-                    // campaignTitle: campaign.title  // ← Removed, use item field instead
+                    campaignTitle: campaign.title
                 })
             });
             
